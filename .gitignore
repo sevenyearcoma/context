@@ -1,0 +1,22 @@
+# env
+.env
+.env.local
+.env*.local
+
+# Next.js
+.next/
+out/
+
+# deps
+node_modules/
+
+# build info
+tsconfig.tsbuildinfo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# GCP key (never commit)
+key.json
+*-keyfile.json
