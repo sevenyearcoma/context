@@ -25,7 +25,7 @@ function delay(ms: number) {
 // ─── Global Request Queue (Self-Throttling) ──────────────────────────────────
 // Ensures only one request to Semantic Scholar is in flight at a time
 // across all instances of this retrieval function.
-let semanticScholarQueue: Promise<any> = Promise.resolve();
+let semanticScholarQueue: Promise<void> = Promise.resolve();
 const MIN_REQUEST_GAP = 3000; // 3 seconds per public API regs
 let lastRequestTime = 0;
 
@@ -185,8 +185,8 @@ async function searchSemanticScholar(query: string, limit: number = 20): Promise
       semanticScholarCache.set(cacheKey, papers);
       return papers;
 
-    } catch (err: any) {
-      if (err.name === 'AbortError') {
+    } catch (err: unknown) {
+      if (err instanceof Error && err.name === 'AbortError') {
         console.warn('[SemanticScholar] Request timed out.');
       } else {
         console.error('[SemanticScholar] Search failed:', err);
