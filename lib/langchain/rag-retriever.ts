@@ -25,7 +25,7 @@ function delay(ms: number) {
 // ─── Global Request Queue (Self-Throttling) ──────────────────────────────────
 // Ensures only one request to Semantic Scholar is in flight at a time
 // across all instances of this retrieval function.
-let semanticScholarQueue: Promise<void> = Promise.resolve();
+let semanticScholarQueue: Promise<unknown> = Promise.resolve();
 const MIN_REQUEST_GAP = 3000; // 3 seconds per public API regs
 let lastRequestTime = 0;
 
@@ -103,7 +103,7 @@ async function searchSemanticScholar(query: string, limit: number = 20): Promise
   const apiKey = process.env.SEMANTIC_SCHOLAR_API_KEY;
 
   // 2. Queue the request to enforce staggering
-  return semanticScholarQueue = semanticScholarQueue.then(async () => {
+  const queued = semanticScholarQueue.then(async () => {
     let retries = 0;
     const maxRetries = 2;
     let backoff = 4000; // Start with 4s backoff (safer for public API)
@@ -196,6 +196,8 @@ async function searchSemanticScholar(query: string, limit: number = 20): Promise
   }
   return [];
 });
+  semanticScholarQueue = queued;
+  return queued;
 }
 
 // ─── Vector Math ─────────────────────────────────────────────────────────────
