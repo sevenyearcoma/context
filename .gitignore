@@ -10,13 +10,18 @@ out/
 # deps
 node_modules/
 
-# build info
+# build
 tsconfig.tsbuildinfo
 
-# OS
-.DS_Store
-Thumbs.db
-
-# GCP key (never commit)
+# GCP
 key.json
 *-keyfile.json
+
+# OS / editors
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Claude
+.claude/
