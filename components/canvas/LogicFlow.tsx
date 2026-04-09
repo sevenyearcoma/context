@@ -15,32 +15,28 @@ import {
 import '@xyflow/react/dist/style.css'
 
 import type { DeconstructionResult, NodeType } from '@/types'
-import { PremiseNode } from './nodes/PremiseNode'
-import { SpeculationNode } from './nodes/SpeculationNode'
-import { AbsurdMirrorNode } from './nodes/AbsurdMirrorNode'
-import { EmpiricalAnchorNode } from './nodes/EmpiricalAnchorNode'
-import { SystemicLeverNode } from './nodes/SystemicLeverNode'
+import { ViolationNode } from './nodes/ViolationNode'
+import { ResultBiasNode } from './nodes/ResultBiasNode'
+import { SystemicTruthNode } from './nodes/SystemicTruthNode'
+import { BoundaryDefenseNode } from './nodes/BoundaryDefenseNode'
 
 const nodeTypes = {
-  premise: PremiseNode,
-  speculation: SpeculationNode,
-  absurdMirror: AbsurdMirrorNode,
-  empiricalAnchor: EmpiricalAnchorNode,
-  systemicLever: SystemicLeverNode,
+  violation: ViolationNode,
+  resultBias: ResultBiasNode,
+  systemicTruth: SystemicTruthNode,
+  boundaryDefense: BoundaryDefenseNode,
 }
 
 const NODE_WIDTH = 300
 const NODE_HEIGHT = 140
-const H_GAP = 110  // horizontal gap between type columns
-const V_GAP = 20   // vertical gap between nodes in the same column
+const H_GAP = 110
+const V_GAP = 20
 
-// Left-to-right: each type is a column
 const TYPE_COL: Record<NodeType, number> = {
-  premise: 0,
-  speculation: 1,
-  absurdMirror: 2,
-  empiricalAnchor: 3,
-  systemicLever: 4,
+  violation: 0,
+  resultBias: 1,
+  systemicTruth: 2,
+  boundaryDefense: 3,
 }
 
 function buildRFNodes(nodes: DeconstructionResult['nodes']): RFNode[] {
@@ -74,33 +70,34 @@ function buildRFNodes(nodes: DeconstructionResult['nodes']): RFNode[] {
 function buildRFEdges(edges: DeconstructionResult['edges']): RFEdge[] {
   return edges.map(edge => {
     const label = edge.label?.toLowerCase() ?? ''
-    const isAssumption = 
-      label.includes('assum') || 
-      label.includes('ignor') || 
-      label.includes('предполагает') || 
-      label.includes('игнорирует')
-    const isAbsurd =
-      label.includes('absurd') ||
-      label.includes('arbitrar') ||
-      label.includes('parallel') ||
-      label.includes('абсурд')
-    const isGrounding =
-      label.includes('lead') ||
-      label.includes('point') ||
-      label.includes('support') ||
-      label.includes('collapse') ||
-      label.includes('ведет') ||
-      label.includes('разбивается') ||
-      label.includes('открывает') ||
-      label.includes('выявляет')
+    const isViolation =
+      label.includes('наруш') ||
+      label.includes('требует') ||
+      label.includes('атаку') ||
+      label.includes('создает')
+    const isBias =
+      label.includes('искаж') ||
+      label.includes('заставляет') ||
+      label.includes('ожида')
+    const isTruth =
+      label.includes('разбива') ||
+      label.includes('факт') ||
+      label.includes('истин') ||
+      label.includes('опирается')
+    const isDefense =
+      label.includes('защит') ||
+      label.includes('право') ||
+      label.includes('разрешает')
 
-    const strokeColor = isAssumption
-      ? 'rgba(238,125,119,0.45)'
-      : isAbsurd
-        ? 'rgba(238,195,100,0.4)'
-        : isGrounding
-          ? 'rgba(141,160,177,0.45)'
-          : 'rgba(179,204,191,0.25)'
+    const strokeColor = isViolation
+      ? 'rgba(239,68,68,0.25)' // muted red
+      : isBias
+        ? 'rgba(245,158,11,0.25)' // muted amber
+        : isTruth
+          ? 'rgba(56,189,248,0.25)' // muted sky blue
+          : isDefense
+            ? 'rgba(34,197,94,0.25)' // muted green
+            : 'rgba(179,204,191,0.15)' // muted default
 
     return {
       id: edge.id,
@@ -108,7 +105,7 @@ function buildRFEdges(edges: DeconstructionResult['edges']): RFEdge[] {
       target: edge.target,
       label: edge.label,
       type: 'default', // bezier
-      animated: isAbsurd || isGrounding,
+      animated: true,
       style: { stroke: strokeColor, strokeWidth: 1.5 },
       labelStyle: {
         fill: 'rgba(166,172,178,0.5)',

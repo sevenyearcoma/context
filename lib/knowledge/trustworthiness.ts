@@ -45,8 +45,17 @@ const TRUST_WEIGHTS = {
   recency: 0.20,
 } as const;
 
-/** Balance between semantic similarity and trustworthiness in final ranking */
-export const ALPHA = 0.55;
+/** Balance between semantic similarity and trustworthiness in final ranking.
+ *
+ * combinedScore = α·similarity + (1-α)·trustworthiness
+ *
+ * α = 0.1 (old): trustworthiness dominates; curated papers (trust=1.0) always win
+ *   regardless of relevance — semantic search never surfaces.
+ * α = 0.5 (new): equal weight; a live paper with cos=0.7 and trust=0.5 scores 0.60,
+ *   beating a curated paper that happens to be off-topic (cos=0.1 → score 0.55).
+ *   Curated papers still win when equally relevant due to trust advantage.
+ */
+export const ALPHA = 0.9;
 
 /** Number of papers to select for the final context */
 export const TOP_K = 5;

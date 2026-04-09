@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { LogicFlow } from '@/components/canvas/LogicFlow'
+import { MentorChat } from '@/components/ui/MentorChat'
 import { EMOTIONAL_STATES } from '@/lib/emotional-states'
 import type { EmotionalState, Myth, DeconstructionResult, DeconstructionNode } from '@/types'
 
@@ -19,7 +20,7 @@ interface HistoryEntry {
   archived: boolean
 }
 
-type ViewState = 'home' | 'loading' | 'journey' | 'canvas' | 'history' | 'archives'
+type ViewState = 'home' | 'loading' | 'journey' | 'canvas' | 'history' | 'archives' | 'mindmap' | 'mentor'
 
 const STATE_COLOR: Record<EmotionalState['category'], string> = {
   inadequacy: 'rgba(255,248,244,0.85)',
@@ -217,6 +218,18 @@ function Sidebar({
           active={view === 'canvas'}
           disabled={!graphData}
           onClick={() => graphData && onNavigate('canvas')}
+        />
+        <NavItem
+          label="Ментор"
+          active={view === 'mentor'}
+          disabled={!graphData}
+          onClick={() => graphData && onNavigate('mentor')}
+        />
+        <NavItem
+          label="Mind Map"
+          active={view === 'mindmap'}
+          disabled={entries.length === 0}
+          onClick={() => entries.length > 0 && onNavigate('mindmap')}
         />
         <NavItem
           label="История"
@@ -645,7 +658,7 @@ function LoadingView() {
 // ─── Journey Step Types ───────────────────────────────────────────────────────
 interface JourneyStepData {
   id: string
-  type: 'comfort' | 'safetyAnchor' | 'premise' | 'speculation' | 'absurdMirror' | 'empiricalAnchor' | 'systemicLever' | 'complete'
+  type: 'comfort' | 'safetyAnchor' | 'violation' | 'resultBias' | 'systemicTruth' | 'boundaryDefense' | 'complete'
   prefix: string
   title: string
   body: string
@@ -681,27 +694,24 @@ function buildJourneySteps(data: DeconstructionResult): JourneyStepData[] {
   }
 
   // Steps 2-N: Nodes in narrative order
-  const typeOrder = ['premise', 'speculation', 'absurdMirror', 'empiricalAnchor', 'systemicLever'] as const
+  const typeOrder = ['violation', 'resultBias', 'systemicTruth', 'boundaryDefense'] as const
   const prefixes: Record<string, string> = {
-    premise: 'Ты сейчас думаешь:',
-    speculation: 'Но подожди. Это предполагает:',
-    absurdMirror: 'Это так же логично, как:',
-    empiricalAnchor: 'Что говорит наука:',
-    systemicLever: 'Что уже есть внутри:',
+    violation: 'Столкновение:',
+    resultBias: 'Искажение контекста:',
+    systemicTruth: 'Универсальная Истина:',
+    boundaryDefense: 'Отпор:',
   }
   const colors: Record<string, string> = {
-    premise: '#e0e6ed',
-    speculation: 'rgba(238,200,198,0.9)',
-    absurdMirror: 'rgba(238,220,160,0.9)',
-    empiricalAnchor: 'rgba(190,210,228,0.9)',
-    systemicLever: 'rgba(210,240,230,0.9)',
+    violation: 'rgba(239,68,68,0.7)',
+    resultBias: 'rgba(245,158,11,0.7)',
+    systemicTruth: 'rgba(56,189,248,0.7)',
+    boundaryDefense: 'rgba(34,197,94,0.7)',
   }
   const accents: Record<string, string> = {
-    premise: 'rgba(179,204,191,0.15)',
-    speculation: 'rgba(238,125,119,0.15)',
-    absurdMirror: 'rgba(238,195,100,0.15)',
-    empiricalAnchor: 'rgba(141,160,177,0.15)',
-    systemicLever: 'rgba(110,210,180,0.15)',
+    violation: 'rgba(239,68,68,0.25)',
+    resultBias: 'rgba(245,158,11,0.25)',
+    systemicTruth: 'rgba(56,189,248,0.25)',
+    boundaryDefense: 'rgba(34,197,94,0.25)',
   }
 
   for (const t of typeOrder) {
@@ -737,9 +747,11 @@ function buildJourneySteps(data: DeconstructionResult): JourneyStepData[] {
 function JourneyView({
   data,
   onShowGraph,
+  onShowMentor,
 }: {
   data: DeconstructionResult
   onShowGraph: () => void
+  onShowMentor: () => void
 }) {
   const [currentStep, setCurrentStep] = useState(0)
   const steps = buildJourneySteps(data)
@@ -882,9 +894,10 @@ function JourneyView({
               <div
                 style={{
                   padding: '32px 36px',
-                  background: step.accentColor,
-                  borderRadius: '1rem',
+                  background: '#161a1e',
+                  borderRadius: '0.75rem',
                   border: `1px solid ${step.accentColor}`,
+                  boxShadow: '0 4px 20px rgba(0,0,0,0.3)',
                 }}
               >
                 {step.prefix && (
@@ -975,29 +988,54 @@ function JourneyView({
                   </p>
                 )}
 
-                <button
-                  onClick={onShowGraph}
-                  style={{
-                    background: 'rgba(179,204,191,0.1)',
-                    border: '1px solid rgba(179,204,191,0.2)',
-                    borderRadius: '0.5rem',
-                    padding: '12px 28px',
-                    cursor: 'pointer',
-                    fontSize: 11,
-                    color: '#b3ccbf',
-                    letterSpacing: '0.1em',
-                    fontFamily: 'var(--font-inter), sans-serif',
-                    transition: 'background 0.3s ease',
-                  }}
-                  onMouseEnter={e =>
-                    (e.currentTarget.style.background = 'rgba(179,204,191,0.18)')
-                  }
-                  onMouseLeave={e =>
-                    (e.currentTarget.style.background = 'rgba(179,204,191,0.1)')
-                  }
-                >
-                  Хочу увидеть полную карту логики →
-                </button>
+                <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
+                  <button
+                    onClick={onShowMentor}
+                    style={{
+                      background: 'rgba(179,204,191,0.15)',
+                      border: '1px solid rgba(179,204,191,0.3)',
+                      borderRadius: '0.5rem',
+                      padding: '12px 28px',
+                      cursor: 'pointer',
+                      fontSize: 11,
+                      color: '#b3ccbf',
+                      letterSpacing: '0.1em',
+                      fontFamily: 'var(--font-inter), sans-serif',
+                      transition: 'background 0.3s ease',
+                    }}
+                    onMouseEnter={e =>
+                      (e.currentTarget.style.background = 'rgba(179,204,191,0.25)')
+                    }
+                    onMouseLeave={e =>
+                      (e.currentTarget.style.background = 'rgba(179,204,191,0.15)')
+                    }
+                  >
+                    Поговорить с ментором →
+                  </button>
+                  <button
+                    onClick={onShowGraph}
+                    style={{
+                      background: 'transparent',
+                      border: '1px solid rgba(66,73,78,0.35)',
+                      borderRadius: '0.5rem',
+                      padding: '12px 28px',
+                      cursor: 'pointer',
+                      fontSize: 11,
+                      color: 'rgba(166,172,178,0.5)',
+                      letterSpacing: '0.1em',
+                      fontFamily: 'var(--font-inter), sans-serif',
+                      transition: 'background 0.3s ease',
+                    }}
+                    onMouseEnter={e =>
+                      (e.currentTarget.style.background = 'rgba(66,73,78,0.12)')
+                    }
+                    onMouseLeave={e =>
+                      (e.currentTarget.style.background = 'transparent')
+                    }
+                  >
+                    Карта логики
+                  </button>
+                </div>
               </div>
             )}
           </motion.div>
@@ -1053,7 +1091,7 @@ function JourneyView({
               transition: 'background 0.3s ease',
             }}
           >
-            {step.type === 'comfort' ? 'Покажи, почему →' : step.type === 'systemicLever' ? 'Есть смысл →' : 'Дальше →'}
+            {step.type === 'comfort' ? 'Покажи, почему →' : step.type === 'boundaryDefense' ? 'Есть смысл →' : 'Дальше →'}
           </motion.button>
         )}
       </div>
@@ -1653,6 +1691,7 @@ export default function Home() {
               key="journey"
               data={graphData}
               onShowGraph={() => setView('canvas')}
+              onShowMentor={() => setView('mentor')}
             />
           )}
           {view === 'canvas' && graphData && (
@@ -1660,6 +1699,13 @@ export default function Home() {
               key="canvas"
               data={graphData}
               onBack={() => setView('journey')}
+            />
+          )}
+          {view === 'mentor' && graphData && (
+            <MentorChat
+              key="mentor"
+              graphData={graphData}
+              onClose={() => setView('journey')}
             />
           )}
           {view === 'history' && (
@@ -1677,6 +1723,54 @@ export default function Home() {
               onOpen={handleOpenEntry}
               onToggleArchive={handleToggleArchive}
             />
+          )}
+          {view === 'mindmap' && (
+            <div style={{ width: '100%', height: '100%' }}>
+              <LogicFlow 
+                data={{
+                  comfortMessage: "Единая карта твоих границ",
+                  safetyAnchor: "Каждая связь здесь — это шаг к устойчивости.",
+                  nodes: entries.flatMap((e, idx) => 
+                    e.graphData.nodes.map(n => ({
+                      ...n,
+                      id: `${e.id}-${n.id}`,
+                      // We don't have n.position here, LogicFlow calculates it.
+                      // We can pass a label prefix to distinguish them.
+                      label: `[${idx + 1}] ${n.label}`
+                    }))
+                  ),
+                  edges: entries.flatMap(e => 
+                    e.graphData.edges.map(edge => ({
+                      ...edge,
+                      id: `${e.id}-${edge.id}`,
+                      source: `${e.id}-${edge.source}`,
+                      target: `${e.id}-${edge.target}`
+                    }))
+                  ),
+                  insight: "Это твоя личная экосистема границ.",
+                  focusShift: "От разрозненных мыслей к единой картине ресурсов."
+                }} 
+              />
+              <button
+                onClick={() => setView('home')}
+                style={{
+                  position: 'absolute',
+                  top: 24,
+                  right: 24,
+                  background: 'rgba(27,32,37,0.8)',
+                  backdropFilter: 'blur(8px)',
+                  border: '1px solid rgba(66,73,78,0.3)',
+                  color: '#e0e6ed',
+                  padding: '8px 16px',
+                  borderRadius: 4,
+                  cursor: 'pointer',
+                  fontSize: 12,
+                  zIndex: 10
+                }}
+              >
+                Вернуться
+              </button>
+            </div>
           )}
         </AnimatePresence>
       </div>
